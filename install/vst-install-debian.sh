@@ -844,6 +844,9 @@ if [ "$apache" = 'yes'  ]; then
     update-rc.d apache2 defaults
     service apache2 start
     check_result $? "apache2 start failed"
+else
+    update-rc.d apache2 disable >/dev/null 2>&1
+    service apache2 stop >/dev/null 2>&1
 fi
 
 
@@ -1086,6 +1089,28 @@ if [ "$exim" = 'yes' ] && [ "$mysql" = 'yes' ]; then
     if [ "$release" -eq 8 ]; then
         mv -f /etc/roundcube/main.inc.php /etc/roundcube/config.inc.php
         mv -f /etc/roundcube/db.inc.php /etc/roundcube/debian-db-roundcube.php
+
+        # RoundCube tinyMCE fix
+        tinymceFixArchiveURL=$vestacp/roundcube/roundcube-tinymce.tar.gz
+        tinymceParentFolder=/usr/share/roundcube/program/js
+        tinymceFolder=$tinymceParentFolder/tinymce
+        tinymceBadJS=$tinymceFolder/tiny_mce.js
+        tinymceFixArchive=$tinymceParentFolder/roundcube-tinymce.tar.gz
+        if [[ -L "$tinymceFolder" && -d "$tinymceFolder" ]]; then
+            if [ -f "$tinymceBadJS" ]; then
+                wget $tinymceFixArchiveURL -O $tinymceFixArchive
+                if [[ -f "$tinymceFixArchive" && -s "$tinymceFixArchive" ]]; then
+                    rm $tinymceFolder
+                    tar -xzf $tinymceFixArchive -C $tinymceParentFolder
+                    rm $tinymceFixArchive
+                    chown -R root:root $tinymceFolder
+                else
+                    echo "File roundcube-tinymce.tar.gz is not downloaded, RoundCube tinyMCE fix is not applied"
+                    rm $tinymceFixArchive
+                fi
+            fi
+        fi
+
     fi
 fi
 

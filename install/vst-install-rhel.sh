@@ -852,6 +852,12 @@ if [ "$nginx" = 'yes' ]; then
     chkconfig nginx on
     service nginx start
     check_result $? "nginx start failed"
+
+    # Workaround for OpenVZ/Virtuozzo
+    if [ "$release" -eq '7' ] && [ -e "/proc/vz/veinfo" ]; then
+        echo "#Vesta: workraround for networkmanager" >> /etc/rc.local
+        echo "sleep 3 && service nginx restart" >> /etc/rc.local
+    fi
 fi
 
 
@@ -884,6 +890,12 @@ if [ "$apache" = 'yes'  ]; then
     chkconfig httpd on
     service httpd start
     check_result $? "httpd start failed"
+
+    # Workaround for OpenVZ/Virtuozzo
+    if [ "$release" -eq '7' ] && [ -e "/proc/vz/veinfo" ]; then
+        echo "#Vesta: workraround for networkmanager" >> /etc/rc.local
+        echo "sleep 2 && service httpd restart" >> /etc/rc.local
+    fi
 fi
 
 
@@ -1124,6 +1136,13 @@ if [ "$spamd" = 'yes' ]; then
     chkconfig spamassassin on
     service spamassassin start
     check_result $? "spamassassin start failed"
+    if [ "$release" -eq '7' ]; then
+        groupadd -g 1001 spamd
+        useradd -u 1001 -g spamd -s /sbin/nologin -d \
+            /var/lib/spamassassin spamd
+        mkdir /var/lib/spamassassin
+        chown spamd:spamd /var/lib/spamassassin
+    fi
 fi
 
 

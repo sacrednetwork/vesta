@@ -246,6 +246,7 @@ $LANG['en'] = array(
     'MySQL Usage on localhost'  => 'MySQL Usage on localhost',
     'PostgreSQL Usage on localhost'  => 'PostgreSQL Usage on localhost',
     'Bandwidth Usage eth0'  => 'Bandwidth Usage eth0',
+    'Bandwidth Usage eth1'  => 'Bandwidth Usage eth1',
     'Exim Usage'  => 'Exim Usage',
     'FTP Usage'  => 'FTP Usage',
     'SSH Usage'  => 'SSH Usage',
@@ -729,5 +730,23 @@ $LANG['en'] = array(
 
     'webalizer' => 'webalizer',
     'awstats' => 'awstats',
+
+    'Vesta SSL' => 'Vesta SSL',
+    'SUBJECT' => 'SUBJECT',
+    'ALIASES' => 'ALIASES',
+    'NOT_BEFORE' => 'NOT_BEFORE',
+    'NOT_AFTER' => 'NOT_AFTER',
+    'SIGNATURE' => 'SIGNATURE',
+    'PUB_KEY' => 'PUB_KEY',
+    'ISSUER' => 'ISSUER',
+
+    'Use server hostname' => 'Use server hostname',
+    'Use domain hostname' => 'Use domain hostname',
+    'Use STARTTLS' => 'Use STARTTLS',
+    'Use SSL' => 'Use SSL',
+    'No encryption' => 'No encryption',
+    'Do not use encryption' => 'Do not use encryption',
+
+    'maximum characters length, including prefix' => 'maximum %s characters length, including prefix',
 
 );
