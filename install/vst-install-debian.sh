@@ -29,7 +29,7 @@ if [ "$release" -eq 8 ]; then
         mysql-client postgresql postgresql-contrib phppgadmin phpMyAdmin mc
         flex whois rssh git idn zip sudo bc ftp lsof ntpdate rrdtool quota
         e2fslibs bsdutils e2fsprogs curl imagemagick fail2ban dnsutils
-        bsdmainutils cron vesta vesta-nginx vesta-php expect"
+        bsdmainutils cron vesta vesta-nginx vesta-php expect libmail-dkim-perl"
 else
     software="nginx apache2 apache2-utils apache2.2-common
         apache2-suexec-custom libapache2-mod-ruid2
@@ -556,6 +556,7 @@ if [ "$clamd" = 'no' ]; then
 fi
 if [ "$spamd" = 'no' ]; then
     software=$(echo "$software" | sed -e "s/spamassassin//")
+    software=$(echo "$software" | sed -e "s/libmail-dkim-perl//")
 fi
 if [ "$dovecot" = 'no' ]; then
     software=$(echo "$software" | sed -e "s/dovecot-imapd//")
@@ -885,6 +886,9 @@ if [ "$vsftpd" = 'yes' ]; then
     update-rc.d vsftpd defaults
     service vsftpd start
     check_result $? "vsftpd start failed"
+
+    # To be deleted after release 0.9.8-18
+    echo "/sbin/nologin" >> /etc/shells
 fi
 
 
@@ -1019,6 +1023,7 @@ fi
 if [ "$dovecot" = 'yes' ]; then
     gpasswd -a dovecot mail
     wget $vestacp/dovecot.tar.gz -O /etc/dovecot.tar.gz
+    wget $vestacp/logrotate/dovecot -O /etc/logrotate.d/dovecot
     cd /etc
     rm -rf dovecot dovecot.conf
     tar -xzf dovecot.tar.gz
@@ -1044,6 +1049,13 @@ if [ "$clamd" = 'yes' ]; then
         mkdir /var/run/clamav
     fi
     chown -R clamav:clamav /var/run/clamav
+    if [ -f "/lib/systemd/system/clamav-daemon.service" ]; then
+        file="/lib/systemd/system/clamav-daemon.service"
+        if [ $( grep -ic "mkdir" $file ) -eq 0 ]; then
+            sed -i "s/\[Service\]/\[Service\]\nExecStartPre = \/bin\/mkdir -p \/var\/run\/clamav\nExecStartPre = \/bin\/chown -R clamav:clamav \/var\/run\/clamav/g" $file
+        fi
+    fi
+
     service clamav-daemon start
     check_result $? "clamav-daeom start failed"
 fi

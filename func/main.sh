@@ -2,7 +2,7 @@
 # Internal variables
 HOMEDIR='/home'
 BACKUP='/backup'
-BACKUP_GZIP=5
+BACKUP_GZIP=9
 BACKUP_DISK_LIMIT=95
 BACKUP_LA_LIMIT=5
 RRD_STEP=300
@@ -109,6 +109,7 @@ is_system_enabled() {
         check_result $E_DISABLED "$2 is not enabled"
     fi
 }
+
 
 # User package check
 is_package_full() {
@@ -367,6 +368,40 @@ decrease_user_value() {
     sed -i "s/$key='$old'/$key='$new'/g" $conf
 }
 
+# Notify user
+send_notice() {
+    topic=$1
+    notice=$2
+
+    if [ "$notify" = 'yes' ]; then
+        touch $USER_DATA/notifications.conf
+        chmod 660 $USER_DATA/notifications.conf
+
+        time_n_date=$(date +'%T %F')
+        time=$(echo "$time_n_date" |cut -f 1 -d \ )
+        date=$(echo "$time_n_date" |cut -f 2 -d \ )
+
+        nid=$(grep "NID=" $USER_DATA/notifications.conf |cut -f 2 -d \')
+        nid=$(echo "$nid" |sort -n |tail -n1)
+        if [ ! -z "$nid" ]; then
+            nid="$((nid +1))"
+        else
+            nid=1
+        fi
+
+        str="NID='$nid' TOPIC='$topic' NOTICE='$notice' TYPE='$type'"
+        str="$str ACK='no' TIME='$time' DATE='$date'"
+
+        echo "$str" >> $USER_DATA/notifications.conf
+
+        if [ -z "$(grep NOTIFICATIONS $USER_DATA/user.conf)" ]; then
+            sed -i "s/^TIME/NOTIFICATIONS='yes'\nTIME/g" $USER_DATA/user.conf
+        else
+            update_user_value "$user" '$NOTIFICATIONS' "yes"
+        fi
+    fi
+}
+
 # Recalculate U_DISK value
 recalc_user_disk_usage() {
     u_usage=0
@@ -583,7 +618,10 @@ is_date_format_valid() {
 # Database user validator
 is_dbuser_format_valid() {
     exclude="[!|@|#|$|^|&|*|(|)|+|=|{|}|:|,|<|>|?|/|\|\"|'|;|%|\`| ]"
-    if [[ "$1" =~ $exclude ]] || [ 17 -le ${#1} ]; then
+    if [ 17 -le ${#1} ]; then
+		check_result $E_INVALID "mysql username can be up to 16 characters long"
+	fi
+    if [[ "$1" =~ $exclude ]]; then
         check_result $E_INVALID "invalid $2 format :: $1"
     fi
 }
@@ -804,4 +842,38 @@ is_format_valid() {
             esac
         fi
     done
+}
+
+# Domain argument formatting
+format_domain() {
+    if [[ "$domain" = *[![:ascii:]]* ]]; then
+        if [[ "$domain" =~ [[:upper:]] ]]; then
+            domain=$(echo "$domain" |sed 's/[[:upper:]].*/\L&/')
+        fi
+    else
+        if [[ "$domain" =~ [[:upper:]] ]]; then
+            domain=$(echo "$domain" |tr '[:upper:]' '[:lower:]')
+        fi
+    fi
+    if [[ "$domain" =~ ^www\..* ]]; then
+        domain=$(echo "$domain" |sed -e "s/^www.//")
+    fi
+    if [[ "$domain" =~ .*\.$ ]]; then
+        domain=$(echo "$domain" |sed -e "s/\.$//")
+    fi
+}
+
+format_domain_idn() {
+    if [[ "$domain_idn" = *[![:ascii:]]* ]]; then
+        domain_idn=$(idn -t --quiet -a $domain_idn)
+    fi
+}
+
+format_aliases() {
+    if [ ! -z "$aliases" ] && [ "$aliases" != 'none' ]; then
+        aliases=$(echo $aliases |tr '[:upper:]' '[:lower:]' |tr ',' '\n')
+        aliases=$(echo "$aliases" |sed -e "s/\.$//" |sort -u)
+        aliases=$(echo "$aliases" |grep -v www.$domain |sed -e "/^$/d")
+        aliases=$(echo "$aliases" |tr '\n' ',' |sed -e "s/,$//")
+    fi
 }

@@ -916,16 +916,18 @@ input[type="checkbox"] {
 
 .l-stat {
   margin: 0 auto;
-  display: table;
   margin: 34px auto;
   position: fixed;
   background-color: #fff;
   z-index: 100;
   padding-top: 30px;
+  width: 100%;
+  overflow: hidden;
 }
 .l-stat__col {
-  display: table-cell;
+  display: block;
   vertical-align: top;
+  float: left;
 }
 .l-stat__col a {
   display: inline-block;
@@ -1128,13 +1130,13 @@ div.l-content > div.l-separator:nth-of-type(4) {
 
 .l-sort-toolbar td.toggle-all {
   padding-top: 7px;
-  padding-right: 40px;
+  padding-right: 20px;
 }
 
 .l-sort-toolbar .sort-by {
   cursor: pointer;
   padding-top: 7px;
-  padding-right: 40px;
+  padding-left: 40px;
 }
 .l-sort-toolbar .sort-by:hover {
   color: #555;
@@ -1346,9 +1348,11 @@ div.l-content > div.l-separator:nth-of-type(4) {
 }
 
 
-.l-unit--outdated {
-  background-color: #9B3D35;
-  color: #fff;
+.units .l-unit.l-unit--outdated {
+  background-color: #ffcaca;
+  color: #555;
+  border-left: 5px solid #ff6f6f;
+  border-bottom: 1px solid #fff;
 }
 
 .l-unit--suspended .l-unit__name,
@@ -1356,6 +1360,13 @@ div.l-content > div.l-separator:nth-of-type(4) {
 .l-unit--outdated .l-unit__name,
 .l-unit--outdated b {
   color: #c0c0c0;
+}
+
+.l-unit--outdated .l-unit__name {
+  color: #333;
+}
+.l-unit--outdated b {
+  color: #555;
 }
 
 .l-unit--suspended .l-percent {
@@ -1381,7 +1392,7 @@ div.l-content > div.l-separator:nth-of-type(4) {
 
 .l-unit--outdated.selected {
   background: #765D5D !important;
-  color: #FEF482 !important;
+  color: #333 !important;
 }
 
 
@@ -1394,7 +1405,7 @@ div.l-content > div.l-separator:nth-of-type(4) {
 .l-unit--suspended.selected .l-percent__fill,
 .l-unit--suspended.selected .l-unit__name,
 .l-unit--suspended.selected .l-unit__name span {
-  color: #b2ac87 !important;
+  color: #333 !important;
 }
 
 .l-unit.selected .l-percent {
@@ -1484,7 +1495,7 @@ div.l-content > div.l-separator:nth-of-type(4) {
 }
 
 .l-unit.l-unit--outdated .l-unit__date {
-  color: #fff7ae;
+  color: #d24c4c;
   font-size: 10px;
   letter-spacing: 3px;
   text-transform: uppercase;
@@ -2342,7 +2353,7 @@ body.mobile .l-icon-shortcuts {
   color: #BE5ABF;
   font-weight: bold;
   display: inline-block;
-  height: 16px;
+  height: 17px;
   overflow: hidden;
   padding-top: 6px;
   width: 593px;
@@ -2352,7 +2363,7 @@ body.mobile .l-icon-shortcuts {
   color: #9fbf0c;
   font-weight: bold;
   display: inline-block;
-  height: 16px;
+  height: 17px;
   overflow: hidden;
   padding-top: 6px;
   max-width: 600px;
@@ -2423,6 +2434,11 @@ body.mobile .l-icon-shortcuts {
 label {
   cursor: pointer;
 }
+
+label:hover {
+  color: #333;
+}
+
 .vst-input {
   background-color: #fff;
   border: 1px solid #cfcfcf;
@@ -2498,7 +2514,7 @@ label {
 }
 
 .vst-list.flat {
-  border: 1px solid #fff; 
+  border: 1px solid #fff;
   color: #2c9491;
   text-transform: uppercase;
   font-weight: bold;
@@ -2623,6 +2639,15 @@ a.vst-text:active b{
   margin: 2px 6px 0 3px;
   padding: 5px;
 }
+.lets-encrypt-note {
+  color: #89a40a !important;
+  font-style: italic;
+  font-weight: normal !important;
+  height: 30px;
+  padding-top: 10px;
+  vertical-align: top;
+}
+
 .additional-control {
   margin-left: 17px;
   color: #2C9491;
@@ -2695,6 +2720,7 @@ td.hint {
   font-style: italic;
   font-weight: normal;
 }
+.ftp-path-prefix { padding-top: 7px; }
 
 .ui-button,
 .button {
@@ -3089,6 +3115,7 @@ form#vstobjects.suspended {
 .l-sort-toolbar__search-box {
   float: right !important;
   padding-top: 3px;
+  padding-right: 0 !important;
 }
 .ui-dialog .ui-dialog-buttonpane button:nth-of-type(2) {
   -background-color: #dfdedd;
@@ -3098,13 +3125,14 @@ form#vstobjects.suspended {
   background: rgba(50, 50, 50, 0.9);
   display: inline-block;
   position: fixed;
-  right: 20%;
+  left: 50%;
   bottom: 0;
   color: #eee;
   width: 800px;
   border: 1px solid #333;
   font-size: 13px;
   z-index: 120;
+  transform: translate(-50%, 0);
 }
 .shortcuts .header {
   border-bottom: 1px solid #333;
