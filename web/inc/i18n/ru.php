@@ -197,7 +197,7 @@ $LANG['ru'] = array(
     'SSL Home Directory' => 'Директория SSL',
     'Lets Encrypt Support'  => 'Поддержка Lets Encrypt',
     'Lets Encrypt'  => 'Lets Encrypt',
-    'Your certificate will be automatically issued in 5 minutes' => 'Сертификат будет автоматически создан в течении 5-ти минут',
+    'Your certificate will be automatically issued in 5 minutes' => 'Сертификат будет автоматически создан в течение 5-ти минут',
     'Proxy Support' => 'Поддержка Proxy',
     'Proxy Extensions' => 'Обработка Proxy',
     'Web Statistics' => 'Статистика сайта',
@@ -750,10 +750,11 @@ $LANG['ru'] = array(
     'Use server hostname' => 'Использовать серверное имя хоста',
     'Use domain hostname' => 'Использовать доменное имя хоста',
     'Use STARTTLS' => 'Использовать STARTTLS',
-    'Use SSL' => 'Использовать SSL',
+    'Use SSL / TLS' => 'Использовать SSL / TLS',
     'No encryption' => 'Без шифрования',
     'Do not use encryption' => 'Не использовать шифрование',
 
     'maximum characters length, including prefix' => 'максимальное %s количество символов, включая префикс',
 
+    'Email Credentials' => 'Email Credentials',
 );
