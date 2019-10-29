@@ -563,6 +563,7 @@ $LANG['nl'] = array(
     'MAIL Server' => 'MAIL Server',
     'Antivirus' => 'Antivirus',
     'AntiSpam' => 'AntiSpam',
+    'Use Web Domain SSL Certificate' => 'Use Web Domain SSL Certificate',
     'Webmail URL' => 'Webmail URL',
     'MySQL Support' => 'MySQL Support',
     'phpMyAdmin URL' => 'phpMyAdmin URL',
@@ -757,5 +758,5 @@ $LANG['nl'] = array(
 
     'maximum characters length, including prefix' => 'maximaal %s karakters lang, inclusief prefix',
 
-    'Email Credentials' => 'Email Credentials',
+    'Email Credentials' => 'E-mailreferenties',
 );

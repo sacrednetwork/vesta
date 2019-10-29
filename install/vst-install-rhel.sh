@@ -19,10 +19,10 @@ codename="${os}_$release"
 vestacp="$VESTA/install/$VERSION/$release"
 
 # Defining software pack for all distros
-software="awstats bc bind bind-libs bind-utils clamav-server clamav-update
+software="nginx awstats bc bind bind-libs bind-utils clamav-server clamav-update
     curl dovecot e2fsprogs exim expect fail2ban flex freetype ftp GeoIP httpd
     ImageMagick iptables-services jwhois lsof mailx mariadb mariadb-server mc
-    mod_fcgid mod_ruid2 mod_ssl net-tools nginx ntp openssh-clients pcre php
+    mod_fcgid mod_ruid2 mod_ssl net-tools ntp openssh-clients pcre php
     php-bcmath php-cli php-common php-fpm php-gd php-imap php-mbstring
     php-mcrypt phpMyAdmin php-mysql php-pdo phpPgAdmin php-pgsql php-soap
     php-tidy php-xml php-xmlrpc postgresql postgresql-contrib
@@ -671,6 +671,8 @@ fi
 
 # Disabling iptables
 service iptables stop
+service firewalld stop >/dev/null 2>&1
+
 
 # Configuring NTP synchronization
 echo '#!/bin/sh' > /etc/cron.daily/ntpdate
@@ -688,6 +690,10 @@ chmod a+x /backup
 
 # Set directory color
 echo 'LS_COLORS="$LS_COLORS:di=00;33"' >> /etc/profile
+
+# Register /sbin/nologin and /usr/sbin/nologin
+echo "/sbin/nologin" >> /etc/shells
+echo "/usr/sbin/nologin" >> /etc/shells
 
 # Changing default systemd interval
 if [ "$release" -eq '7' ]; then
@@ -1022,8 +1028,9 @@ if [ "$mysql" = 'yes' ]; then
     fi
 
     # Securing MySQL installation
-    mysqladmin -u root password $vpass
-    echo -e "[client]\npassword='$vpass'\n" > /root/.my.cnf
+    mpass=$(gen_pass)
+    mysqladmin -u root password $mpass
+    echo -e "[client]\npassword='$mpass'\n" > /root/.my.cnf
     chmod 600 /root/.my.cnf
     mysql -e "DELETE FROM mysql.user WHERE User=''"
     mysql -e "DROP DATABASE test" >/dev/null 2>&1
@@ -1035,8 +1042,15 @@ if [ "$mysql" = 'yes' ]; then
     if [ "$apache" = 'yes' ]; then
         cp -f $vestacp/pma/phpMyAdmin.conf /etc/httpd/conf.d/
     fi
+    mysql < /usr/share/phpMyAdmin/sql/create_tables.sql
+    p=$(gen_pass)
+    mysql -e "GRANT ALL ON phpmyadmin.*
+        TO phpmyadmin@localhost IDENTIFIED BY '$p'"
     cp -f $vestacp/pma/config.inc.conf /etc/phpMyAdmin/config.inc.php
-    sed -i "s/%blowfish_secret%/$(gen_pass)/g" /etc/phpMyAdmin/config.inc.php
+    sed -i "s/%blowfish_secret%/$(gen_pass 32)/g" /etc/phpMyAdmin/config.inc.php
+    sed -i "s/%phpmyadmin_pass%/$p/g" /etc/phpMyAdmin/config.inc.php
+    chmod 777 /var/lib/phpMyAdmin/temp
+    chmod 777 /var/lib/phpMyAdmin/save
 fi
 
 
@@ -1045,9 +1059,10 @@ fi
 #----------------------------------------------------------#
 
 if [ "$postgresql" = 'yes' ]; then
+    ppass=$(gen_pass)
     if [ $release -eq 5 ]; then
         service postgresql start
-        sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$vpass'"
+        sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$ppass'"
         service postgresql stop
         cp -f $vestacp/postgresql/pg_hba.conf /var/lib/pgsql/data/
         service postgresql start
@@ -1055,7 +1070,7 @@ if [ "$postgresql" = 'yes' ]; then
         service postgresql initdb
         cp -f $vestacp/postgresql/pg_hba.conf /var/lib/pgsql/data/
         service postgresql start
-        sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$vpass'"
+        sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$ppass'"
     fi
     # Configuring phpPgAdmin
     if [ "$apache" = 'yes' ]; then
@@ -1123,6 +1138,9 @@ if [ "$dovecot" = 'yes' ]; then
     cp -rf $vestacp/dovecot /etc/
     cp -f $vestacp/logrotate/dovecot /etc/logrotate.d/
     chown -R root:root /etc/dovecot*
+    if [ "$release" -eq 7 ]; then
+        sed -i "s#namespace inbox {#namespace inbox {\n  inbox = yes#" /etc/dovecot/conf.d/15-mailboxes.conf
+    fi
     chkconfig dovecot on
     service dovecot start
     check_result $? "dovecot start failed"
@@ -1273,6 +1291,7 @@ ip=$(ip addr|grep 'inet '|grep global|head -n1|awk '{print $2}'|cut -f1 -d/)
 
 # Configuring firewall
 if [ "$iptables" = 'yes' ]; then
+    chkconfig firewalld off >/dev/null 2>&1
     $VESTA/bin/v-update-firewall
 fi
 
@@ -1286,13 +1305,13 @@ fi
 
 # Configuring MySQL/MariaDB host
 if [ "$mysql" = 'yes' ]; then
-    $VESTA/bin/v-add-database-host mysql localhost root $vpass
+    $VESTA/bin/v-add-database-host mysql localhost root $mpass
     $VESTA/bin/v-add-database admin default default $(gen_pass) mysql
 fi
 
 # Configuring PostgreSQL host
 if [ "$postgresql" = 'yes' ]; then
-    $VESTA/bin/v-add-database-host pgsql localhost postgres $vpass
+    $VESTA/bin/v-add-database-host pgsql localhost postgres $ppass
     $VESTA/bin/v-add-database admin db db $(gen_pass) pgsql
 fi
 
@@ -1345,9 +1364,6 @@ $VESTA/bin/v-add-cron-vesta-autoupdate
 #----------------------------------------------------------#
 #                   Vesta Access Info                      #
 #----------------------------------------------------------#
-
-# Sending install notification to vestacp.com
-wget vestacp.com/notify/?$codename -O /dev/null -q
 
 # Comparing hostname and IP
 host_ip=$(host $servername |head -n 1 |awk '{print $NF}')

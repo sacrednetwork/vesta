@@ -74,6 +74,9 @@ gen_pass() {
     echo "$PASS"
 }
 
+# Defining 32 char blowfish_secret
+blowfish_secret=`openssl rand -base64 32`;
+
 # Defining return code check function
 check_result() {
     if [ $1 -ne 0 ]; then
@@ -1008,8 +1011,9 @@ if [ "$mysql" = 'yes' ]; then
     fi
 
     # Securing MySQL installation
-    mysqladmin -u root password $vpass
-    echo -e "[client]\npassword='$vpass'\n" > /root/.my.cnf
+    mpass=$(gen_pass)
+    mysqladmin -u root password $mpass
+    echo -e "[client]\npassword='$mpass'\n" > /root/.my.cnf
     chmod 600 /root/.my.cnf
     mysql -e "DELETE FROM mysql.user WHERE User=''"
     mysql -e "DROP DATABASE test" >/dev/null 2>&1
@@ -1022,7 +1026,7 @@ if [ "$mysql" = 'yes' ]; then
         cp -f $vestacp/pma/phpMyAdmin.conf /etc/httpd/conf.d/
     fi
     cp -f $vestacp/pma/config.inc.conf /etc/phpMyAdmin/config.inc.php
-    sed -i "s/%blowfish_secret%/$(gen_pass)/g" /etc/phpMyAdmin/config.inc.php
+    sed -i "s#%blowfish_secret#$blowfish_secret#g" /etc/phpMyAdmin/config.inc.php
 fi
 
 
@@ -1031,9 +1035,10 @@ fi
 #----------------------------------------------------------#
 
 if [ "$postgresql" = 'yes' ]; then
+    ppass=$(gen_pass)
     if [ $release -eq 5 ]; then
         service postgresql start
-        sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$vpass'"
+        sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$ppass'"
         service postgresql stop
         cp -f $vestacp/postgresql/pg_hba.conf /var/lib/pgsql/data/
         service postgresql start
@@ -1041,7 +1046,7 @@ if [ "$postgresql" = 'yes' ]; then
         service postgresql initdb
         cp -f $vestacp/postgresql/pg_hba.conf /var/lib/pgsql/data/
         service postgresql start
-        sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$vpass'"
+        sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$ppass'"
     fi
     # Configuring phpPgAdmin
     if [ "$apache" = 'yes' ]; then
@@ -1272,13 +1277,13 @@ fi
 
 # Configuring MySQL host
 if [ "$mysql" = 'yes' ]; then
-    $VESTA/bin/v-add-database-host mysql localhost root $vpass
+    $VESTA/bin/v-add-database-host mysql localhost root $mpass
     $VESTA/bin/v-add-database admin default default $(gen_pass) mysql
 fi
 
 # Configuring PostgreSQL host
 if [ "$postgresql" = 'yes' ]; then
-    $VESTA/bin/v-add-database-host pgsql localhost postgres $vpass
+    $VESTA/bin/v-add-database-host pgsql localhost postgres $ppass
     $VESTA/bin/v-add-database admin db db $(gen_pass) pgsql
 fi
 
@@ -1331,9 +1336,6 @@ $VESTA/bin/v-add-cron-vesta-autoupdate
 #----------------------------------------------------------#
 #                   Vesta Access Info                      #
 #----------------------------------------------------------#
-
-# Sending install notification to vestacp.com
-wget vestacp.com/notify/?$codename -O /dev/null -q
 
 # Comparing hostname and IP
 host_ip=$(host $servername |head -n 1 |awk '{print $NF}')
